@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ray Killing Chess.com</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #666;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        button, select {
+            padding: 12px 24px;
+            border: 2px solid #999;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #f5f5f5, #e0e0e0);
+            color: #333;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover, select:hover {
+            background: linear-gradient(180deg, #fff, #f0f0f0);
+            border-color: #666;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            background: linear-gradient(180deg, #e0e0e0, #d0d0d0);
+        }
+
+        select option {
+            background: #fff;
+            color: #333;
+            padding: 8px;
+        }
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            gap: 0;
+            border: 3px solid #888;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px auto;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .square.light {
+            background-color: #f0d9b5;
+            color: #333;
+        }
+
+        .square.dark {
+            background-color: #b58863;
+            color: #333;
+        }
+
+        .square.selected {
+            background-color: #999 !important;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .square.possible-move {
+            background-color: #ccc !important;
+        }
+
+        .square.check {
+            background-color: #777 !important;
+            animation: check-pulse 1s infinite;
+        }
+
+        @keyframes check-pulse {
+            0%, 100% { box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7); }
+            50% { box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9); }
+        }
+
+        .square:hover {
+            transform: scale(1.05);
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-thinking {
+            color: #ffd700;
+            animation: thinking-pulse 1s infinite;
+        }
+
+        @keyframes thinking-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .turn-white {
+            color: #ffd700;
+        }
+
+        .turn-black {
+            color: #c0c0c0;
+        }
+
+        .check-message {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        /* Sosial links container */
+.social-links {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Sosial link tombol */
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.social-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Ukuran icon diperkecil */
+.social-icon {
+    width: 14px;  /* sebelumnya 18px */
+    height: 14px; /* sebelumnya 18px */
+    object-fit: cover;
+    border-radius: 3px;
+}
+
+/* Responsive untuk layar kecil */
+@media (max-width: 600px) {
+    .social-icon {
+        width: 12px; /* lebih kecil untuk mobile */
+        height: 12px;
+    }
+
+    .social-link {
+        padding: 10px 8px;
+        font-size: 0.75rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>♔ Ray Killing Chess.com ♛</h1>
+        <!-- Copyright -->
+        <div class="copyright" style="margin-top: 15px; font-size: 0.9rem; color: #aaa;">
+            &copy; 2025 Muhammad Rayyan. All rights reserved.
+        </div>
+    </div>
+        <div class="controls">
+            <button onclick="newGame()">🔄 New Game</button>
+            <button onclick="flipBoard()">🔃 Flip Board</button>
+            <button onclick="toggleAI()">🤖 <span id="aiToggle">vs AI: OFF</span></button>
+            <select id="difficultySelect" onchange="setDifficulty()" style="display: none; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; font-weight: 600;">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        
+        <div class="chess-board" id="chessBoard"></div>
+        
+        <div class="status" id="gameStatus">
+            <span id="turnDisplay">Giliran: Putih</span>
+        </div>
+        
+        <div class="social-links">
+    <a href="https://github.com/rayyanzaaaaaaaa" rel="noopener" class="social-link" target="_blank">
+        <img src="download (1).png" alt="Github" class="social-icon"> Github
+    </a>
+    <a href="https://www.instagram.com/raynncoupgrace.__" rel="noopener" class="social-link" target="_blank">
+        <img src="download.png" alt="Instagram" class="social-icon"> Instagram
+    </a>
+</div>
+
+    </div>
+
+    <script>
+        // State permainan
+        let currentPlayer = 'white';
+        let selectedSquare = null;
+        let gameBoard = [];
+        let isFlipped = false;
+        let gameEnded = false;
+        let isAIMode = false;
+        let aiDifficulty = 'medium';
+        let aiThinking = false;
+        
+        // Tracking untuk castling
+        let castlingRights = {
+            white: { kingMoved: false, kingsideRookMoved: false, queensideRookMoved: false },
+            black: { kingMoved: false, kingsideRookMoved: false, queensideRookMoved: false }
+        };
+
+        // Unicode symbols untuk bidak catur
+        const pieces = {
+            white: {
+                king: '♔',
+                queen: '♕',
+                rook: '♖',
+                bishop: '♗',
+                knight: '♘',
+                pawn: '♙'
+            },
+            black: {
+                king: '♚',
+                queen: '♛',
+                rook: '♜',
+                bishop: '♝',
+                knight: '♞',
+                pawn: '♟'
+            }
+        };
+
+        // Suara game menggunakan Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(frequency, duration, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playMoveSound() {
+            playSound(800, 0.1);
+        }
+
+        function playCheckSound() {
+            playSound(600, 0.2);
+            setTimeout(() => playSound(800, 0.2), 100);
+        }
+
+        function playCheckmateSound() {
+            playSound(400, 0.3);
+            setTimeout(() => playSound(300, 0.3), 150);
+            setTimeout(() => playSound(200, 0.5), 300);
+        }
+
+        // Inisialisasi papan dengan informasi warna
+        function initBoard() {
+            gameBoard = [];
+            for (let row = 0; row < 8; row++) {
+                gameBoard[row] = [];
+                for (let col = 0; col < 8; col++) {
+                    gameBoard[row][col] = null;
+                }
+            }
+            
+            // Setup bidak hitam (baris 0-1)
+            const blackPieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+            for (let col = 0; col < 8; col++) {
+                gameBoard[0][col] = { piece: blackPieces[col], color: 'black' };
+                gameBoard[1][col] = { piece: 'pawn', color: 'black' };
+            }
+            
+            // Setup bidak putih (baris 6-7)
+            const whitePieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+            for (let col = 0; col < 8; col++) {
+                gameBoard[6][col] = { piece: 'pawn', color: 'white' };
+                gameBoard[7][col] = { piece: whitePieces[col], color: 'white' };
+            }
+        }
+
+        // Render papan
+        function renderBoard() {
+            const board = document.getElementById('chessBoard');
+            board.innerHTML = '';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    
+                    // Tentukan warna kotak
+                    if ((row + col) % 2 === 0) {
+                        square.classList.add('light');
+                    } else {
+                        square.classList.add('dark');
+                    }
+
+                    // Tentukan posisi berdasarkan flip
+                    const displayRow = isFlipped ? 7 - row : row;
+                    const displayCol = isFlipped ? 7 - col : col;
+                    
+                    square.dataset.row = displayRow;
+                    square.dataset.col = displayCol;
+                    
+                    // Tambahkan bidak
+                    const pieceData = gameBoard[displayRow][displayCol];
+                    if (pieceData) {
+                        square.textContent = pieces[pieceData.color][pieceData.piece];
+                        square.dataset.piece = pieceData.piece;
+                        square.dataset.color = pieceData.color;
+                    }
+                    
+                    square.addEventListener('click', () => handleSquareClick(displayRow, displayCol));
+                    board.appendChild(square);
+                }
+            }
+
+            // Highlight raja jika dalam skak
+            highlightCheck();
+        }
+
+        // Handle klik kotak
+        function handleSquareClick(row, col) {
+            if (gameEnded || aiThinking || (isAIMode && currentPlayer === 'black')) return;
+
+            const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            const pieceData = gameBoard[row][col];
+            
+            if (selectedSquare) {
+                // Jika kotak yang sama diklik lagi
+                if (selectedSquare.row === row && selectedSquare.col === col) {
+                    clearSelection();
+                    return;
+                }
+                
+                // Coba lakukan perpindahan
+                if (isValidMove(selectedSquare.row, selectedSquare.col, row, col)) {
+                    // Simulasi untuk memastikan raja tidak dalam skak
+                    const originalBoard = gameBoard.map(row => row.map(cell => cell ? {...cell} : null));
+                    gameBoard[row][col] = gameBoard[selectedSquare.row][selectedSquare.col];
+                    gameBoard[selectedSquare.row][selectedSquare.col] = null;
+                    
+                    const kingInCheckAfterMove = isKingInCheck(currentPlayer);
+                    
+                    // Kembalikan state
+                    gameBoard = originalBoard;
+                    
+                    if (!kingInCheckAfterMove) {
+                        makeMove(selectedSquare.row, selectedSquare.col, row, col);
+                    } else {
+                        clearSelection();
+                        // Jika mengklik bidak sendiri, pilih bidak tersebut
+                        if (pieceData && pieceData.color === currentPlayer) {
+                            selectSquare(row, col);
+                        }
+                    }
+                } else {
+                    clearSelection();
+                    // Jika mengklik bidak sendiri, pilih bidak tersebut
+                    if (pieceData && pieceData.color === currentPlayer) {
+                        selectSquare(row, col);
+                    }
+                }
+            } else {
+                // Pilih bidak jika milik pemain saat ini
+                if (pieceData && pieceData.color === currentPlayer) {
+                    selectSquare(row, col);
+                }
+            }
+        }
+
+        // Pilih kotak
+        function selectSquare(row, col) {
+            clearSelection();
+            selectedSquare = { row, col };
+            
+            const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            square.classList.add('selected');
+            
+            // Highlight kemungkinan gerakan
+            highlightPossibleMoves(row, col);
+        }
+
+        // Bersihkan seleksi
+        function clearSelection() {
+            document.querySelectorAll('.square').forEach(sq => {
+                sq.classList.remove('selected', 'possible-move');
+            });
+            selectedSquare = null;
+        }
+
+        // Highlight kemungkinan gerakan
+        function highlightPossibleMoves(row, col) {
+            const piece = gameBoard[row][col];
+            const color = row < 2 ? 'black' : 'white';
+            
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (isValidMove(row, col, r, c)) {
+                        const targetSquare = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        if (targetSquare) {
+                            targetSquare.classList.add('possible-move');
+                        }
+                    }
+                }
+            }
+        }
+
+        // Validasi gerakan
+        function isValidMove(fromRow, fromCol, toRow, toCol) {
+            // Cek batas papan
+            if (toRow < 0 || toRow > 7 || toCol < 0 || toCol > 7) return false;
+            
+            const pieceData = gameBoard[fromRow][fromCol];
+            const targetPieceData = gameBoard[toRow][toCol];
+            
+            if (!pieceData) return false;
+            
+            // Tidak bisa makan bidak sendiri
+            if (targetPieceData && pieceData.color === targetPieceData.color) return false;
+            
+            // Validasi berdasarkan jenis bidak
+            switch (pieceData.piece) {
+                case 'pawn':
+                    return isValidPawnMove(fromRow, fromCol, toRow, toCol, pieceData.color);
+                case 'rook':
+                    return isValidRookMove(fromRow, fromCol, toRow, toCol);
+                case 'knight':
+                    return isValidKnightMove(fromRow, fromCol, toRow, toCol);
+                case 'bishop':
+                    return isValidBishopMove(fromRow, fromCol, toRow, toCol);
+                case 'queen':
+                    return isValidQueenMove(fromRow, fromCol, toRow, toCol);
+                case 'king':
+                    return isValidKingMove(fromRow, fromCol, toRow, toCol);
+                default:
+                    return false;
+            }
+        }
+
+        // Cek apakah castling valid
+        function isValidCastling(fromRow, fromCol, toRow, toCol) {
+            const pieceData = gameBoard[fromRow][fromCol];
+            if (!pieceData || pieceData.piece !== 'king') return false;
+            
+            const color = pieceData.color;
+            const rights = castlingRights[color];
+            
+            // Raja sudah pernah bergerak
+            if (rights.kingMoved) return false;
+            
+            // Raja dalam skak
+            if (isKingInCheck(color)) return false;
+            
+            // Castling kingside (short castling)
+            if (toCol === fromCol + 2) {
+                if (rights.kingsideRookMoved) return false;
+                
+                // Cek apakah rook ada di posisi yang benar
+                const rookData = gameBoard[fromRow][7];
+                if (!rookData || rookData.piece !== 'rook' || rookData.color !== color) return false;
+                
+                // Cek jalur kosong
+                if (gameBoard[fromRow][5] || gameBoard[fromRow][6]) return false;
+                
+                // Cek raja tidak melewati skak
+                const originalBoard = gameBoard.map(row => row.map(cell => cell ? {...cell} : null));
+                
+                // Simulasi gerakan ke f1/f8
+                gameBoard[fromRow][fromCol + 1] = gameBoard[fromRow][fromCol];
+                gameBoard[fromRow][fromCol] = null;
+                const passesCheck1 = !isKingInCheck(color);
+                
+                // Simulasi gerakan ke g1/g8
+                gameBoard[fromRow][fromCol + 2] = gameBoard[fromRow][fromCol + 1];
+                gameBoard[fromRow][fromCol + 1] = null;
+                const passesCheck2 = !isKingInCheck(color);
+                
+                // Kembalikan state
+                gameBoard = originalBoard;
+                
+                return passesCheck1 && passesCheck2;
+            }
+            
+            // Castling queenside (long castling)
+            if (toCol === fromCol - 2) {
+                if (rights.queensideRookMoved) return false;
+                
+                // Cek apakah rook ada di posisi yang benar
+                const rookData = gameBoard[fromRow][0];
+                if (!rookData || rookData.piece !== 'rook' || rookData.color !== color) return false;
+                
+                // Cek jalur kosong
+                if (gameBoard[fromRow][1] || gameBoard[fromRow][2] || gameBoard[fromRow][3]) return false;
+                
+                // Cek raja tidak melewati skak
+                const originalBoard = gameBoard.map(row => row.map(cell => cell ? {...cell} : null));
+                
+                // Simulasi gerakan ke d1/d8
+                gameBoard[fromRow][fromCol - 1] = gameBoard[fromRow][fromCol];
+                gameBoard[fromRow][fromCol] = null;
+                const passesCheck1 = !isKingInCheck(color);
+                
+                // Simulasi gerakan ke c1/c8
+                gameBoard[fromRow][fromCol - 2] = gameBoard[fromRow][fromCol - 1];
+                gameBoard[fromRow][fromCol - 1] = null;
+                const passesCheck2 = !isKingInCheck(color);
+                
+                // Kembalikan state
+                gameBoard = originalBoard;
+                
+                return passesCheck1 && passesCheck2;
+            }
+            
+            return false;
+        }
+
+        // Validasi gerakan pawn
+        function isValidPawnMove(fromRow, fromCol, toRow, toCol, color) {
+            const direction = color === 'white' ? -1 : 1;
+            const startRow = color === 'white' ? 6 : 1;
+            
+            // Gerakan maju
+            if (fromCol === toCol && !gameBoard[toRow][toCol]) {
+                if (fromRow + direction === toRow) return true;
+                if (fromRow === startRow && fromRow + 2 * direction === toRow) return true;
+            }
+            
+            // Makan diagonal
+            if (Math.abs(fromCol - toCol) === 1 && fromRow + direction === toRow && gameBoard[toRow][toCol]) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // Validasi gerakan rook
+        function isValidRookMove(fromRow, fromCol, toRow, toCol) {
+            if (fromRow !== toRow && fromCol !== toCol) return false;
+            return isPathClear(fromRow, fromCol, toRow, toCol);
+        }
+
+        // Validasi gerakan knight
+        function isValidKnightMove(fromRow, fromCol, toRow, toCol) {
+            const rowDiff = Math.abs(fromRow - toRow);
+            const colDiff = Math.abs(fromCol - toCol);
+            return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+        }
+
+        // Validasi gerakan bishop
+        function isValidBishopMove(fromRow, fromCol, toRow, toCol) {
+            if (Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol)) return false;
+            return isPathClear(fromRow, fromCol, toRow, toCol);
+        }
+
+        // Validasi gerakan queen
+        function isValidQueenMove(fromRow, fromCol, toRow, toCol) {
+            return isValidRookMove(fromRow, fromCol, toRow, toCol) || 
+                   isValidBishopMove(fromRow, fromCol, toRow, toCol);
+        }
+
+        // Validasi gerakan king (termasuk castling)
+        function isValidKingMove(fromRow, fromCol, toRow, toCol) {
+            const rowDiff = Math.abs(fromRow - toRow);
+            const colDiff = Math.abs(fromCol - toCol);
+            
+            // Gerakan normal king (1 kotak)
+            if (rowDiff <= 1 && colDiff <= 1) {
+                return true;
+            }
+            
+            // Castling (2 kotak horizontal)
+            if (rowDiff === 0 && colDiff === 2) {
+                return isValidCastling(fromRow, fromCol, toRow, toCol);
+            }
+            
+            return false;
+        }
+
+        // Cek apakah jalur bebas
+        function isPathClear(fromRow, fromCol, toRow, toCol) {
+            const rowStep = toRow > fromRow ? 1 : toRow < fromRow ? -1 : 0;
+            const colStep = toCol > fromCol ? 1 : toCol < fromCol ? -1 : 0;
+            
+            let currentRow = fromRow + rowStep;
+            let currentCol = fromCol + colStep;
+            
+            while (currentRow !== toRow || currentCol !== toCol) {
+                if (gameBoard[currentRow][currentCol]) return false;
+                currentRow += rowStep;
+                currentCol += colStep;
+            }
+            
+            return true;
+        }
+
+        // Lakukan perpindahan
+        function makeMove(fromRow, fromCol, toRow, toCol) {
+            // Simpan state untuk undo jika raja dalam skak
+            const originalBoard = gameBoard.map(row => row.map(cell => cell ? {...cell} : null));
+            const pieceData = gameBoard[fromRow][fromCol];
+            
+            // Cek apakah ini castling
+            const isCastling = pieceData.piece === 'king' && Math.abs(toCol - fromCol) === 2;
+            
+            if (isCastling) {
+                // Lakukan castling
+                executeCastling(fromRow, fromCol, toRow, toCol);
+            } else {
+                // Gerakan normal
+                gameBoard[toRow][toCol] = gameBoard[fromRow][fromCol];
+                gameBoard[fromRow][fromCol] = null;
+            }
+            
+            // Update castling rights
+            updateCastlingRights(fromRow, fromCol, toRow, toCol, pieceData);
+            
+            // Cek apakah gerakan membuat raja sendiri dalam skak
+            if (isKingInCheck(currentPlayer)) {
+                // Batalkan gerakan
+                gameBoard = originalBoard;
+                clearSelection();
+                return;
+            }
+            
+            playMoveSound();
+            clearSelection();
+            
+            // Ganti pemain
+            currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+            updateStatus();
+            
+            // Render ulang papan
+            renderBoard();
+            
+            // Cek skak dan skakmat
+            checkGameState();
+            
+            // Jika AI mode dan giliran hitam
+            if (isAIMode && currentPlayer === 'black' && !gameEnded) {
+                setTimeout(() => {
+                    makeAIMove();
+                }, 500);
+            }
+        }
+
+        // Eksekusi castling
+        function executeCastling(fromRow, fromCol, toRow, toCol) {
+            const color = gameBoard[fromRow][fromCol].color;
+            
+            // Pindahkan raja
+            gameBoard[toRow][toCol] = gameBoard[fromRow][fromCol];
+            gameBoard[fromRow][fromCol] = null;
+            
+            // Pindahkan rook ke posisi yang benar
+            if (toCol > fromCol) {
+                // Kingside castling (O-O)
+                // Raja: e1→g1, Rook: h1→f1 (rook pindah 2 kotak ke kiri)
+                gameBoard[fromRow][toCol - 1] = gameBoard[fromRow][7];
+                gameBoard[fromRow][7] = null;
+            } else {
+                // Queenside castling (O-O-O)  
+                // Raja: e1→c1, Rook: a1→d1 (rook pindah 3 kotak ke kanan)
+                gameBoard[fromRow][toCol + 1] = gameBoard[fromRow][0];
+                gameBoard[fromRow][0] = null;
+            }
+        }
+
+        // Update castling rights
+        function updateCastlingRights(fromRow, fromCol, toRow, toCol, pieceData) {
+            const color = pieceData.color;
+            const rights = castlingRights[color];
+            
+            // Jika raja bergerak
+            if (pieceData.piece === 'king') {
+                rights.kingMoved = true;
+            }
+            
+            // Jika rook bergerak
+            if (pieceData.piece === 'rook') {
+                if (color === 'white') {
+                    if (fromCol === 0 && fromRow === 7) rights.queensideRookMoved = true;
+                    if (fromCol === 7 && fromRow === 7) rights.kingsideRookMoved = true;
+                } else {
+                    if (fromCol === 0 && fromRow === 0) rights.queensideRookMoved = true;
+                    if (fromCol === 7 && fromRow === 0) rights.kingsideRookMoved = true;
+                }
+            }
+            
+            // Jika rook dimakan
+            const targetPiece = gameBoard[toRow][toCol];
+            if (targetPiece && targetPiece.piece === 'rook') {
+                const enemyColor = targetPiece.color;
+                const enemyRights = castlingRights[enemyColor];
+                
+                if (enemyColor === 'white') {
+                    if (toCol === 0 && toRow === 7) enemyRights.queensideRookMoved = true;
+                    if (toCol === 7 && toRow === 7) enemyRights.kingsideRookMoved = true;
+                } else {
+                    if (toCol === 0 && toRow === 0) enemyRights.queensideRookMoved = true;
+                    if (toCol === 7 && toRow === 0) enemyRights.kingsideRookMoved = true;
+                }
+            }
+        }
+
+        // Cek apakah raja dalam skak
+        function isKingInCheck(color) {
+            // Cari posisi raja
+            let kingRow = -1, kingCol = -1;
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const pieceData = gameBoard[row][col];
+                    if (pieceData && pieceData.piece === 'king' && pieceData.color === color) {
+                        kingRow = row;
+                        kingCol = col;
+                        break;
+                    }
+                }
+                if (kingRow !== -1) break;
+            }
+            
+            // Jika raja tidak ditemukan, return false
+            if (kingRow === -1) return false;
+            
+            // Cek apakah ada bidak lawan yang bisa menyerang raja
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const pieceData = gameBoard[row][col];
+                    if (pieceData && pieceData.color !== color) {
+                        if (isValidMove(row, col, kingRow, kingCol)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        // Highlight raja jika dalam skak
+        function highlightCheck() {
+            document.querySelectorAll('.square').forEach(sq => {
+                sq.classList.remove('check');
+            });
+            
+            if (isKingInCheck(currentPlayer)) {
+                // Cari raja dan highlight
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const pieceData = gameBoard[row][col];
+                        if (pieceData && pieceData.piece === 'king' && pieceData.color === currentPlayer) {
+                            const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                            if (square) {
+                                square.classList.add('check');
+                            }
+                            return; // Raja sudah ditemukan
+                        }
+                    }
+                }
+            }
+        }
+
+        // Cek apakah ada gerakan legal
+        function hasLegalMoves(color) {
+            for (let fromRow = 0; fromRow < 8; fromRow++) {
+                for (let fromCol = 0; fromCol < 8; fromCol++) {
+                    const pieceData = gameBoard[fromRow][fromCol];
+                    if (pieceData && pieceData.color === color) {
+                        for (let toRow = 0; toRow < 8; toRow++) {
+                            for (let toCol = 0; toCol < 8; toCol++) {
+                                if (isValidMove(fromRow, fromCol, toRow, toCol)) {
+                                    // Simulasi gerakan
+                                    const originalBoard = gameBoard.map(row => row.map(cell => cell ? {...cell} : null));
+                                    gameBoard[toRow][toCol] = gameBoard[fromRow][fromCol];
+                                    gameBoard[fromRow][fromCol] = null;
+                                    
+                                    const kingStillInCheck = isKingInCheck(color);
+                                    
+                                    // Kembalikan state
+                                    gameBoard = originalBoard;
+                                    
+                                    if (!kingStillInCheck) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Cek state permainan
+        function checkGameState() {
+            const inCheck = isKingInCheck(currentPlayer);
+            const hasLegal = hasLegalMoves(currentPlayer);
+            
+            if (inCheck) {
+                if (!hasLegal) {
+                    // Skakmat
+                    const winner = currentPlayer === 'white' ? 'Hitam' : 'Putih';
+                    playCheckmateSound();
+                    setTimeout(() => {
+                        alert(`Skakmat! ${winner} Menang!`);
+                    }, 500);
+                    gameEnded = true;
+                    updateStatus(`Skakmat! ${winner} Menang!`);
+                } else {
+                    // Skak
+                    playCheckSound();
+                    updateStatus(`Raja dalam skak, harus bergerak!`);
+                }
+            } else if (!hasLegal) {
+                // Stalemate
+                alert('Stalemate! Permainan Seri!');
+                gameEnded = true;
+                updateStatus('Stalemate! Permainan Seri!');
+            } else {
+                updateStatus();
+            }
+        }
+
+        // Update status
+        function updateStatus(message = null) {
+            const statusElement = document.getElementById('turnDisplay');
+            
+            if (message) {
+                statusElement.textContent = message;
+                statusElement.className = 'check-message';
+            } else if (aiThinking) {
+                statusElement.textContent = '🤖 AI sedang berpikir...';
+                statusElement.className = 'ai-thinking';
+            } else {
+                const player = currentPlayer === 'white' ? 'Putih' : (isAIMode ? 'AI' : 'Hitam');
+                statusElement.textContent = `Giliran: ${player}`;
+                statusElement.className = currentPlayer === 'white' ? 'turn-white' : 'turn-black';
+            }
+        }
+
+        // Toggle AI mode
+        function toggleAI() {
+            isAIMode = !isAIMode;
+            const toggle = document.getElementById('aiToggle');
+            const difficulty = document.getElementById('difficultySelect');
+            
+            if (isAIMode) {
+                toggle.textContent = 'vs AI: ON';
+                difficulty.style.display = 'inline-block';
+            } else {
+                toggle.textContent = 'vs AI: OFF';
+                difficulty.style.display = 'none';
+            }
+            
+            newGame();
+        }
+
+        // Set AI difficulty
+        function setDifficulty() {
+            aiDifficulty = document.getElementById('difficultySelect').value;
+        }
+
+        // AI Move dengan algoritma minimax
+        function makeAIMove() {
+            if (gameEnded || currentPlayer !== 'black') return;
+            
+            aiThinking = true;
+            updateStatus();
+            
+            // Delay untuk memberikan efek thinking
+            setTimeout(() => {
+                const bestMove = findBestMove();
+                if (bestMove) {
+                    makeMove(bestMove.from.row, bestMove.from.col, bestMove.to.row, bestMove.to.col);
+                }
+                aiThinking = false;
+            }, Math.random() * 1000 + 500);
+        }
+
+        // Evaluasi posisi papan
+        function evaluateBoard() {
+            const pieceValues = {
+                pawn: 10,
+                rook: 50,
+                knight: 30,
+                bishop: 30,
+                queen: 90,
+                king: 900
+            };
+
+            let score = 0;
+            
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const pieceData = gameBoard[row][col];
+                    if (pieceData) {
+                        const value = pieceValues[pieceData.piece];
+                        if (pieceData.color === 'black') {
+                            score += value;
+                            // Bonus posisi untuk AI
+                            if (pieceData.piece === 'pawn' && row > 1) score += (row - 1) * 2;
+                            if (pieceData.piece === 'knight' && row >= 2 && row <= 5 && col >= 2 && col <= 5) score += 10;
+                        } else {
+                            score -= value;
+                            // Penalti posisi untuk lawan
+                            if (pieceData.piece === 'pawn' && row < 6) score -= (6 - row) * 2;
+                        }
+                    }
+                }
+            }
+            
+            // Bonus jika lawan dalam skak
+            if (isKingInCheck('white')) score += 50;
+            if (isKingInCheck('black')) score -= 50;
+            
+            return score;
+        }
+
+        // Minimax algorithm dengan alpha-beta pruning
+        function minimax(depth, alpha, beta, isMaximizing) {
+            if (depth === 0 || gameEnded) {
+                return evaluateBoard();
+            }
+            
+            const moves = getAllPossibleMoves(isMaximizing ? 'black' : 'white');
+            
+            if (moves.length === 0) {
+                if (isKingInCheck(isMaximizing ? 'black' : 'white')) {
+                    return isMaximizing ? -10000 : 10000;
+                }
+                return 0; // Stalemate
+            }
+            
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (const move of moves) {
+                    const backup = makeTemporaryMove(move);
+                    const eval_ = minimax(depth - 1, alpha, beta, false);
+                    undoTemporaryMove(move, backup);
+                    
+                    maxEval = Math.max(maxEval, eval_);
+                    alpha = Math.max(alpha, eval_);
+                    if (beta <= alpha) break; // Alpha-beta pruning
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (const move of moves) {
+                    const backup = makeTemporaryMove(move);
+                    const eval_ = minimax(depth - 1, alpha, beta, true);
+                    undoTemporaryMove(move, backup);
+                    
+                    minEval = Math.min(minEval, eval_);
+                    beta = Math.min(beta, eval_);
+                    if (beta <= alpha) break; // Alpha-beta pruning
+                }
+                return minEval;
+            }
+        }
+
+        // Find best move untuk AI
+        function findBestMove() {
+            const depth = aiDifficulty === 'easy' ? 2 : aiDifficulty === 'medium' ? 3 : 4;
+            const moves = getAllPossibleMoves('black');
+            
+            if (moves.length === 0) return null;
+            
+            let bestMove = null;
+            let bestValue = -Infinity;
+            
+            for (const move of moves) {
+                const backup = makeTemporaryMove(move);
+                const moveValue = minimax(depth - 1, -Infinity, Infinity, false);
+                undoTemporaryMove(move, backup);
+                
+                if (moveValue > bestValue) {
+                    bestValue = moveValue;
+                    bestMove = move;
+                }
+            }
+            
+            return bestMove;
+        }
+
+        // Get semua gerakan yang mungkin untuk warna tertentu
+        function getAllPossibleMoves(color) {
+            const moves = [];
+            
+            for (let fromRow = 0; fromRow < 8; fromRow++) {
+                for (let fromCol = 0; fromCol < 8; fromCol++) {
+                    const pieceData = gameBoard[fromRow][fromCol];
+                    if (pieceData && pieceData.color === color) {
+                        for (let toRow = 0; toRow < 8; toRow++) {
+                            for (let toCol = 0; toCol < 8; toCol++) {
+                                if (isValidMove(fromRow, fromCol, toRow, toCol)) {
+                                    // Simulasi gerakan untuk memastikan raja tidak dalam skak
+                                    const originalBoard = gameBoard.map(row => row.map(cell => cell ? {...cell} : null));
+                                    gameBoard[toRow][toCol] = gameBoard[fromRow][fromCol];
+                                    gameBoard[fromRow][fromCol] = null;
+                                    
+                                    const kingInCheck = isKingInCheck(color);
+                                    gameBoard = originalBoard;
+                                    
+                                    if (!kingInCheck) {
+                                        moves.push({
+                                            from: { row: fromRow, col: fromCol },
+                                            to: { row: toRow, col: toCol }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return moves;
+        }
+
+        // Temporary move untuk evaluasi
+        function makeTemporaryMove(move) {
+            const backup = {
+                capturedPiece: gameBoard[move.to.row][move.to.col],
+                castlingRights: JSON.parse(JSON.stringify(castlingRights))
+            };
+            
+            gameBoard[move.to.row][move.to.col] = gameBoard[move.from.row][move.from.col];
+            gameBoard[move.from.row][move.from.col] = null;
+            
+            return backup;
+        }
+
+        // Undo temporary move
+        function undoTemporaryMove(move, backup) {
+            gameBoard[move.from.row][move.from.col] = gameBoard[move.to.row][move.to.col];
+            gameBoard[move.to.row][move.to.col] = backup.capturedPiece;
+            castlingRights = backup.castlingRights;
+        }
+
+        // Mulai permainan baru
+        function newGame() {
+            currentPlayer = 'white';
+            gameEnded = false;
+            selectedSquare = null;
+            aiThinking = false;
+            
+            // Reset castling rights
+            castlingRights = {
+                white: { kingMoved: false, kingsideRookMoved: false, queensideRookMoved: false },
+                black: { kingMoved: false, kingsideRookMoved: false, queensideRookMoved: false }
+            };
+            
+            initBoard();
+            renderBoard();
+            updateStatus();
+        }
+
+        // Balik papan
+        function flipBoard() {
+            isFlipped = !isFlipped;
+            renderBoard();
+        }
+
+        // Inisialisasi permainan
+        document.addEventListener('DOMContentLoaded', () => {
+            // Enable audio context setelah interaksi user
+            document.addEventListener('click', () => {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            }, { once: true });
+            
+            initBoard();
+            renderBoard();
+            updateStatus();
+        });
+    </script>
+</body>
+</html>
